@@ -3,10 +3,10 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -14,6 +14,39 @@ func main() {
 	http.HandleFunc("/send-request", Handler)
 	log.Println("Server started at :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+// Response 结构定义
+type Response struct {
+	JsonResult  string      `json:"JsonResult"`
+	JsonMessage JsonMessage `json:"JsonMessage"`
+	JsonData    []JsonData  `json:"JsonData"`
+}
+
+type JsonMessage struct {
+	MessageIndex string `json:"MessageIndex"`
+	Remark       string `json:"Remark"`
+	MessageInfo  string `json:"MessageInfo"`
+}
+
+type JsonData struct {
+	SQLBuilderID string    `json:"SQLBuilderID"`
+	Field        []Field   `json:"FIELD"`
+	Row          []RowData `json:"ROW"`
+}
+
+type Field struct {
+	AttrName  string `json:"attrname"`
+	FieldType string `json:"fieldtype"`
+	Width     string `json:"WIDTH"`
+}
+
+type RowData struct {
+	FKindName  string `json:"FKIND_NAME"`
+	FPriceBase string `json:"FPRICE_BASE"`
+	FNewTime   string `json:"FNEWTIME"`
+	FTopRemark string `json:"FTOP_REMARK"`
+	FRemark    string `json:"FREMARK"`
 }
 
 // Handler 处理 HTTP 请求
@@ -52,14 +85,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// 将数据编码为 JSON
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		http.Error(w, "Failed to encode JSON", http.StatusInternalServerError)
+		respondWithError(w)
 		return
 	}
 
 	// 创建 HTTP POST 请求
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		http.Error(w, "Failed to create request", http.StatusInternalServerError)
+		respondWithError(w)
 		return
 	}
 
@@ -70,7 +103,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		http.Error(w, "Failed to send request", http.StatusInternalServerError)
+		respondWithError(w)
 		return
 	}
 	defer resp.Body.Close()
@@ -78,15 +111,47 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// 读取响应体
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		http.Error(w, "Failed to read response", http.StatusInternalServerError)
+		respondWithError(w)
 		return
 	}
 
-	// 打印响应状态码和响应体
-	fmt.Println("Response status:", resp.Status)
-	fmt.Println("Response body:", string(body))
+	// 解析响应 JSON
+	var response Response
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		respondWithError(w)
+		return
+	}
 
-	// 将响应体返回给客户端
+	// 检查是否有有效的 Row 数据
+	if len(response.JsonData) > 0 && len(response.JsonData[0].Row) > 0 {
+		// 获取 RowData 中的最后一个元素
+		lastRow := response.JsonData[0].Row[len(response.JsonData[0].Row)-1]
+
+		// 返回最后一个 RowData 作为 JSON 响应
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(lastRow)
+	} else {
+		respondWithError(w)
+	}
+}
+
+// respondWithError 返回默认的 RowData 错误响应
+func respondWithError(w http.ResponseWriter) {
+	// 获取当前时间并格式化
+	currentTime := time.Now().Format("2006-01-02 15:04:05")
+
+	// 构建默认的 RowData 响应
+	defaultRow := RowData{
+		FKindName:  "Gold Price",
+		FPriceBase: "0 元/克",
+		FNewTime:   currentTime,
+		FTopRemark: "No data available",
+		FRemark:    "Generated due to error",
+	}
+
+	// 设置响应头并返回默认 RowData
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(body)
+	w.WriteHeader(http.StatusInternalServerError)
+	json.NewEncoder(w).Encode(defaultRow)
 }
