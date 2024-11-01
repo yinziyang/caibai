@@ -2,17 +2,22 @@ package handler
 
 import (
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
+var (
+	app *gin.Engine
+)
+
+func init() {
+	app = gin.New()
+	app.GET("/json", JsonHandler)
+	app.GET("/today", TodayHandler)
+	app.GET("/history", HistoryHandler)
+	app.GET("/", JsonHandler)
+}
+
 func Handler(w http.ResponseWriter, r *http.Request) {
-	switch r.URL.Path {
-	case "/json":
-		JsonHandler(w, r)
-	case "/today":
-		TodayHandler(w, r)
-	case "/history":
-		HistoryHandler(w, r)
-	default:
-		JsonHandler(w, r)
-	}
+	app.ServeHTTP(w, r)
 }

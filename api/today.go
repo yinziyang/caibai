@@ -2,14 +2,14 @@ package handler
 
 import (
 	"context"
-	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 )
 
-func TodayHandler(w http.ResponseWriter, r *http.Request) {
+func TodayHandler(c *gin.Context) {
 	timestamps := getTodayTimestamps()
 
 	// 准备所有键
@@ -55,7 +55,9 @@ func TodayHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	renderChart(w, timeLabels, values, "最近24小时黄金价格走势")
+	// 修改渲染逻辑，使用 gin 的响应方式
+	c.Writer.Header().Set("Content-Type", "image/png")
+	renderChart(c.Writer, timeLabels, values, "最近24小时黄金价格走势")
 }
 
 // 生成最近24小时的所有10分钟时间戳

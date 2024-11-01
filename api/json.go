@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // GetNormalizedTimeStamp 返回归一化为10分钟的北京时间的 Unix 时间戳
@@ -126,32 +128,20 @@ func insertToRedis(rowData *RowData) error {
 }
 
 // Handler 处理 HTTP 请求
-func JsonHandler(w http.ResponseWriter, r *http.Request) {
+func JsonHandler(c *gin.Context) {
 	if lastRow, err := callCaibai(); err == nil {
 		insertToRedis(lastRow)
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(lastRow)
+		c.JSON(http.StatusOK, lastRow)
 	} else {
-		respondWithError(w)
+		// 修改错误响应处理
+		currentTime := time.Now().Format("2006-01-02 15:04:05")
+		defaultRow := RowData{
+			FKindName:  "Gold Price",
+			FPriceBase: "0 元/克",
+			FNewTime:   currentTime,
+			FTopRemark: "No data available",
+			FRemark:    "Generated due to error",
+		}
+		c.JSON(http.StatusInternalServerError, defaultRow)
 	}
-}
-
-// respondWithError 返回默认的 RowData 错误响应
-func respondWithError(w http.ResponseWriter) {
-	// 获取当前时间并格式化
-	currentTime := time.Now().Format("2006-01-02 15:04:05")
-
-	// 构建默认的 RowData 响应
-	defaultRow := RowData{
-		FKindName:  "Gold Price",
-		FPriceBase: "0 元/克",
-		FNewTime:   currentTime,
-		FTopRemark: "No data available",
-		FRemark:    "Generated due to error",
-	}
-
-	// 设置响应头并返回默认 RowData
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusInternalServerError)
-	json.NewEncoder(w).Encode(defaultRow)
 }

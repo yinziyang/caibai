@@ -2,14 +2,14 @@ package handler
 
 import (
 	"context"
-	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 )
 
-func HistoryHandler(w http.ResponseWriter, r *http.Request) {
+func HistoryHandler(c *gin.Context) {
 	timestamps := getLast3DaysTimestamps()
 
 	// 准备所有键
@@ -55,7 +55,9 @@ func HistoryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	renderChart(w, timeLabels, values, "近3天黄金价格走势")
+	// 修改渲染逻辑，使用 gin 的响应方式
+	c.Writer.Header().Set("Content-Type", "image/png")
+	renderChart(c.Writer, timeLabels, values, "近3天黄金价格走势")
 }
 
 // 获取最近3天的时间戳
