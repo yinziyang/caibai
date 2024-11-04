@@ -20,23 +20,28 @@ import (
 
 // GetNormalizedTimeStamp 返回归一化为10分钟的北京时间的 Unix 时间戳
 func GetNormalizedTimeStamp() int64 {
-	// 设置北京时间（UTC+8）
+	// 设置上海时区
 	loc, err := time.LoadLocation("Asia/Shanghai")
 	if err != nil {
 		panic(err)
 	}
 
-	// 获取当前北京时间
+	// 获取当前上海时间
 	now := time.Now().In(loc)
 
-	// 获取当前时间的分钟部分
-	minutes := now.Minute()
-
 	// 计算归一化的分钟
-	normalizedMinutes := (minutes / 10) * 10
+	normalizedMinutes := (now.Minute() / 10) * 10
 
 	// 创建新的时间，设置归一化的分钟
-	normalizedTime := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), normalizedMinutes, 0, 0, loc)
+	normalizedTime := time.Date(
+		now.Year(),
+		now.Month(),
+		now.Day(),
+		now.Hour(),
+		normalizedMinutes,
+		0, 0,
+		loc,
+	)
 
 	return normalizedTime.Unix()
 }
@@ -133,8 +138,10 @@ func JsonHandler(c *gin.Context) {
 		insertToRedis(lastRow)
 		c.JSON(http.StatusOK, lastRow)
 	} else {
-		// 修改错误响应处理
-		currentTime := time.Now().Format("2006-01-02 15:04:05")
+		// 获取上海时间
+		loc, _ := time.LoadLocation("Asia/Shanghai")
+		currentTime := time.Now().In(loc).Format("2006-01-02 15:04:05")
+
 		defaultRow := RowData{
 			FKindName:  "Gold Price",
 			FPriceBase: "0 元/克",

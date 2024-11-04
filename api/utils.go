@@ -10,9 +10,21 @@ import (
 
 // 获取指定时间的10分钟归一化时间戳
 func getNormalizedTimestamp(t time.Time) int64 {
+	// 确保时间是上海时区
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	t = t.In(loc)
+
 	minutes := t.Minute()
 	normalizedMinutes := (minutes / 10) * 10
-	normalizedTime := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), normalizedMinutes, 0, 0, t.Location())
+	normalizedTime := time.Date(
+		t.Year(),
+		t.Month(),
+		t.Day(),
+		t.Hour(),
+		normalizedMinutes,
+		0, 0,
+		loc,
+	)
 	return normalizedTime.Unix()
 }
 
