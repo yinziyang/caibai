@@ -45,12 +45,16 @@ func HistoryHandler(c *gin.Context) {
 	var timeLabels []string
 	var values []float64
 
+	loc, _ := time.LoadLocation("Asia/Shanghai")
 	for _, ts := range timestamps {
 		if val, exists := timeValues[ts]; exists {
-			timeLabels = append(timeLabels, time.Unix(ts, 0).Format("01-02 15:04"))
+			// 将时间戳转换为上海时间后再格式化
+			t := time.Unix(ts, 0).In(loc)
+			timeLabels = append(timeLabels, t.Format("01-02 15:04"))
 			values = append(values, val)
 		} else {
-			timeLabels = append(timeLabels, time.Unix(ts, 0).Format("01-02 15:04"))
+			t := time.Unix(ts, 0).In(loc)
+			timeLabels = append(timeLabels, t.Format("01-02 15:04"))
 			values = append(values, 0)
 		}
 	}
