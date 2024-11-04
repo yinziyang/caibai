@@ -96,15 +96,22 @@ func renderChart(w http.ResponseWriter, timeLabels []string, values []float64, t
 		}),
 		charts.WithXAxisOpts(opts.XAxis{
 			Name: "时间",
+			Show: true,
 			AxisLabel: &opts.AxisLabel{
+				Show:   true,
 				Rotate: 45,
+				Margin: 15,
 			},
 			SplitLine: &opts.SplitLine{
 				Show: true,
 				LineStyle: &opts.LineStyle{
 					Color: "#f0f0f0",
 					Type:  "dashed",
+					Width: 1,
 				},
+			},
+			AxisTick: &opts.AxisTick{
+				Show: true,
 			},
 		}),
 	)

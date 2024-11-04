@@ -9,6 +9,7 @@ import (
 var redisClient *redis.Client
 
 func init() {
+
 	redisURL := os.Getenv("REDIS_URL")
 	if redisURL == "" {
 		panic("REDIS_URL environment variable not set")

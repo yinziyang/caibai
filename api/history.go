@@ -59,6 +59,25 @@ func HistoryHandler(c *gin.Context) {
 		}
 	}
 
+	// 对timeLabels和values做处理， 对比连续的数据， 如果前面的值和后面相等， 那就只记录前面的。 最后一个有值的数据也保留
+	var filteredTimeLabels []string
+	var filteredValues []float64
+
+	for i := 0; i < len(values); i++ {
+		if i == len(values)-1 || values[i] != values[i+1] {
+			filteredTimeLabels = append(filteredTimeLabels, timeLabels[i])
+			filteredValues = append(filteredValues, values[i])
+		}
+	}
+	// 保留最后一个有值的数据
+	if len(values) > 0 && (len(filteredValues) == 0 || filteredValues[len(filteredValues)-1] != values[len(values)-1]) {
+		filteredTimeLabels = append(filteredTimeLabels, timeLabels[len(timeLabels)-1])
+		filteredValues = append(filteredValues, values[len(values)-1])
+	}
+
+	timeLabels = filteredTimeLabels
+	values = filteredValues
+
 	// 修改渲染逻辑，使用 gin 的响应方式
 	c.Writer.Header().Set("Content-Type", "image/png")
 	renderChart(c.Writer, timeLabels, values, "近3天黄金价格走势")
