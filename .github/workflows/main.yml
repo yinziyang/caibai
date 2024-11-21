@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Call URL
         run: |
-          curl -X GET "https://caibai.yinziyang.top"
+          curl -X GET "https://caibai.yinziyang.free.hr/today"
         continue-on-error: true
 
       - name: Log timestamp
