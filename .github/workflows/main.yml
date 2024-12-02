@@ -26,7 +26,7 @@ jobs:
 
       - name: Check response
         run: |
-          response=$(curl -s -w "\n%{http_code}" "https://caibai.yinziyang.top/json")
+          response=$(curl -s -w "\n%{http_code}" "https://caibai.yinziyang.free.hr/json")
           status_code=$(echo "$response" | tail -n1)
           if [ "$status_code" != "200" ]; then
             echo "Error: HTTP status code $status_code"
