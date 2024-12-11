@@ -10,7 +10,7 @@ import (
 )
 
 func HistoryHandler(c *gin.Context) {
-	timestamps := getLast3DaysTimestamps()
+	timestamps := getLast7DaysTimestamps()
 
 	// 准备所有键
 	keys := make([]string, len(timestamps))
@@ -105,6 +105,38 @@ func getLast3DaysTimestamps() []int64 {
 	var timestamps []int64
 	// 计算从3天前到现在的所有10分钟时间戳
 	for i := 0; i < 3*24*6+1; i++ {
+		t := startTime.Add(time.Duration(i*10) * time.Minute)
+		if t.After(now) {
+			break
+		}
+		timestamps = append(timestamps, getNormalizedTimestamp(t))
+	}
+	return timestamps
+}
+
+
+// 获取最近7天的时间戳
+func getLast7DaysTimestamps() []int64 {
+	// 设置上海时区
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	now := time.Now().In(loc)
+
+	// 从当前时间往前推7天
+	startTime := now.AddDate(0, 0, -7)
+	// 归一化开始时间到10分钟
+	startTime = time.Date(
+		startTime.Year(),
+		startTime.Month(),
+		startTime.Day(),
+		startTime.Hour(),
+		(startTime.Minute()/10)*10,
+		0, 0,
+		loc,
+	)
+
+	var timestamps []int64
+	// 计算从7天前到现在的所有10分钟时间戳
+	for i := 0; i < 7*24*6+1; i++ {
 		t := startTime.Add(time.Duration(i*10) * time.Minute)
 		if t.After(now) {
 			break
